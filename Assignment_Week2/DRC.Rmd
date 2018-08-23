@@ -44,7 +44,7 @@ cats <- levels(as.factor(data$event_category))
 pal <- colorFactor(cols, cats)
 
 leaflet(data) %>% 
-      addTiles() %>%
+      addProviderTiles(providers$CartoDB.Positron) %>% 
       addCircles(
             weight=0,
             lng=data$longitude,
