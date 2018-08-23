@@ -1,0 +1,66 @@
+
+---
+title: 'Conflict Events in the Democratic Repulic of Congo (Jan 2017-Jul 2018)'
+date: "August 23, 2018"
+output: 
+      html_document:
+            theme: journal
+            highlight: tango
+---
+<style type="text/css">
+h1.title {
+      font-size: 32px;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+      echo=FALSE, 
+      message=FALSE,
+      warning=FALSE)
+
+# Package requirements:
+require(tidyverse)
+require(lubridate)
+require(glue)
+require(leaflet)
+require(htmltools)
+```
+
+```{r data, cache=TRUE}
+# source: https://download.data.world/file_download/makeovermonday/2018w34-visualizing-conflict/ACLED.csv
+data <- read_csv("ACLED.csv") %>%
+      filter(country=="Democratic Republic of Congo") %>% 
+      mutate(
+            event_date=dmy(event_date),
+            event_category=word(event_type, sep="-")) %>%
+      arrange(desc(fatalities))
+```
+
+```{r map, out.width=900, out.height=800, fig.cap="Data source: <a href='https://data.world/makeovermonday/2018w34-visualizing-conflict'>Armed Conflict Location & Event Data Project</a>"}
+# build palette
+cols <- c("black", "navy", "darkgreen", "darkred")
+cats <- levels(as.factor(data$event_category))
+pal <- colorFactor(cols, cats)
+
+leaflet(data) %>% 
+      addTiles() %>%
+      addCircles(
+            weight=0,
+            lng=data$longitude,
+            lat=data$latitude,
+            color=~pal(data$event_category),
+            radius=sqrt(data$fatalities)*5000,
+            label=lapply(
+                  glue(
+                        "<b>{data$location}, {data$event_date}</b><br>
+                        <em>{data$event_category}</em><br>
+                        <em>Actor 1:</em> {data$actor1}<br>
+                        <em>Actor 2:</em> {data$actor2}<br>
+                        {data$fatalities} fatalities"
+                        ),
+                  HTML
+                  )
+            ) %>%
+      addLegend(colors=cols, labels=cats)
+```
